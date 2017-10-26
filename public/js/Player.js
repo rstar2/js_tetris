@@ -32,4 +32,8 @@ export default class Player {
     get pos() {
         return this._pos;
     }
+
+    get piece() {
+        return this._piece;
+    }
 }
