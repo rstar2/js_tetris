@@ -23,12 +23,14 @@ export const MATRIX_O = [
 
 export const MATRIX_S = [
     [0, 1, 1],
-    [1, 1, 0]
+    [1, 1, 0],
+    [0, 0, 0]
 ];
 
 export const MATRIX_Z = [
     [1, 1, 0],
-    [0, 1, 1]
+    [0, 1, 1],
+    [0, 0, 0]
 ];
 
 export const MATRIX_I = [
@@ -40,5 +42,6 @@ export const MATRIX_I = [
 
 export const PIECES = [
     MATRIX_T, MATRIX_L, MATRIX_J,
-    MATRIX_O, MATRIX_S, MATRIX_Z
+    MATRIX_O, MATRIX_S, MATRIX_Z,
+    MATRIX_I
 ];

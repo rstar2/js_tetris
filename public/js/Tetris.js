@@ -25,11 +25,21 @@ export default class Tetris {
     }
 
     start() {
+        // reset the arena
+        matrix.reset(this._arena);
+        // generate a new piece
         this._generatePiece();
-
+        // render all till now 
         this._render();
 
         this._timer.start();
+    }
+
+    _stop() {
+        this._timer.stop();
+        if (window.confirm('Game Over - Start again')) {
+            this.start();
+        }
     }
 
     _generatePiece() {
@@ -52,10 +62,14 @@ export default class Tetris {
 
             // TODO: check for Tetris, e.g. clear full lines and increase points
 
-            // TODO: check for Game Over
-
             // generate a new piece for the player - it will be also started form the top
             this._generatePiece();
+
+            // check for Game Over - just cgeck if right after a new piece there's a collision
+            if (matrix.isCollide(this._arena, this._player)) {
+                this._stop();
+                this._render();
+            }
         }
     }
 
@@ -68,13 +82,30 @@ export default class Tetris {
     }
 
     _rotate(isLeft) {
+        const oldPosX = this._player.pos.x;
         matrix.rotate(this._player.piece, isLeft);
 
-        // check for collision - 
+        // check for collision - we have to check multiple times, until there's no collision
+        // or revert back to starting position if we can't find such
+        // Algorith is: 
+        // check collision - yes :
+        // move 1 to the right, => offset 1
+        // then 2 to the left,  => offset -2
+        // then 3 to the right  => offset 3
+        // then 4 to the left   => offset -4
+        // ...
         let offset = 1;
         while (matrix.isCollide(this._arena, this._player)) {
             // reached the left/right borders
-            this._player.move(isLeft ? 1 : -1);
+            this._player.move(offset);
+            offset = (Math.abs(offset) + 1) * (offset > 0 ? -1 : 1);
+            if (offset > this._player.piece[0].length) {
+                // we can't keep checking forever - break if no "collision-free" position is possible
+                // so revent to starting position
+                this._player.pos.x = oldPosX;
+                matrix.rotate(this._player.piece, !isLeft);
+                break;
+            }
         }
     }
 
@@ -99,6 +130,7 @@ export default class Tetris {
                 break;
             case 81:   // q
                 this._rotate(true);
+                break;
             case 87:   // w
                 this._rotate(false);
                 break;

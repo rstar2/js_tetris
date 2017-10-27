@@ -2,7 +2,7 @@ import Vector from './Vector.js';
 
 export default class Player {
     constructor(arenaCenter = 0) {
-        this._arenaCenter = arenaCenter;
+        this._arenaCenter = Math.floor(arenaCenter);
         this._pos = new Vector(arenaCenter, 0);
         this._piece = undefined;
         this._color = undefined;

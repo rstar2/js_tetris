@@ -12,6 +12,13 @@ export function create(width, height) {
 }
 
 /**
+ * @param {[[]]} matrix 
+ */
+export function reset(matrix) {
+    matrix.forEach(row => row.fill(0));
+}
+
+/**
  * Merge the "ones" from the Player's piece's matrix into the specified matrix
  * @param {[[]]} matrix 
  * @param {Player} Player
