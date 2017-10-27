@@ -99,6 +99,7 @@ export default class Tetris {
                 break;
             case 81:   // q
                 this._rotate(true);
+                break;
             case 87:   // w
                 this._rotate(false);
                 break;
