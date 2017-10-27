@@ -67,11 +67,32 @@ export function isCollide(matrix, player) {
 
 /**
  * @param {[[]]} matrix
- * @param {[[]]} direction
- * @returns {[[]]} 
+ * @param {boolean} isLeft
  */
-export function rotate(matrix, direction) {
-    // TODO:
+export function rotate(matrix, isLeft) {
+    // ROTATE = 1.Traspose + 2.Reverse
+    
+    // 1.Traspose
+    // slice diagonaly the matrix 
+    for (let y = 0, lenRows = matrix.length; y < lenRows; y++) {
+        for (let x = 0; x < y; x++) {
+            // ES6 swapping without the need of extra temp variable
+            [
+                matrix[x][y],
+                matrix[y][x]
+            ] = [
+                matrix[y][x],
+                matrix[x][y]
+            ];
+        }
+    }
+
+    // 2.Reverse
+    if (isLeft) {
+        matrix.forEach(row => row.reverse());
+    } else {
+        matrix.reverse();
+    }
 }
 
 /**

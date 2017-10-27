@@ -65,8 +65,17 @@ export default class Tetris {
             // reached the left/right borders
             this._player.move(isLeft ? 1 : -1);
         }
+    }
 
+    _rotate(isLeft) {
+        matrix.rotate(this._player.piece, isLeft);
 
+        // check for collision - 
+        let offset = 1;
+        while (matrix.isCollide(this._arena, this._player)) {
+            // reached the left/right borders
+            this._player.move(isLeft ? 1 : -1);
+        }
     }
 
     _render() {
@@ -83,13 +92,20 @@ export default class Tetris {
     _handleKeydown(event) {
         switch (event.keyCode) {
             case 37:   // left
+                this._move(true);
+                break;
             case 39:   // right
-                this._move(event.keyCode === 37);
+                this._move(false);
+                break;
+            case 81:   // q
+                this._rotate(true);
+            case 87:   // w
+                this._rotate(false);
                 break;
             case 40:  // down
                 // cancel next "update-drop" while using the keys
                 // in order not to get an additional drop right after the keydown event
-                
+
                 // TODO: allow resetting the accumulated time
                 this._drop();
                 break;
