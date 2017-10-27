@@ -1,32 +1,11 @@
 import Vector from './Vector.js';
-import Piece from './Piece.js';
 
 export default class Player {
-    constructor(x = 0) {
-        this._x = x;
-        this._pos = null;
-        this._piece = null;
-    }
-
-    resetWith(piece) {
-        this._piece = piece;
-        this._pos = new Vector(this._x, 0);
-    }
-
-    drop() {
-        this._pos.y++;
-    }
-
-    move(isLeft) {
-        if (isLeft) {
-            this._pos.x--;
-        } else {
-            this._pos.x++;
-        }
-    }
-
-    render(context) {
-        this._piece.render(context, this._pos);
+    constructor(arenaCenter = 0) {
+        this._arenaCenter = arenaCenter;
+        this._pos = new Vector(arenaCenter, 0);
+        this._piece = undefined;
+        this._color = undefined;
     }
 
     get pos() {
@@ -36,4 +15,34 @@ export default class Player {
     get piece() {
         return this._piece;
     }
+
+    get color() {
+        return this._color;
+    }
+
+    /**
+     * Reset with a new piece matrix
+     * @param {[[]]} piece 
+     * @param {String} color 
+     */
+    resetWith(piece, color = 'white') {
+        this._piece = piece;
+        this._color = color;
+
+        // move to top
+        this._pos.y = 0;
+
+        // center it in the middle
+        // get the middle/center of any row (for instance the first)
+        this._pos.x = this._arenaCenter - Math.floor(this._piece[0].length / 2);
+    }
+
+    drop(offset) {
+        this._pos.y = this._pos.y + offset;
+    }
+
+    move(offset) {
+        this._pos.x = this._pos.x + offset;
+    }
+
 }

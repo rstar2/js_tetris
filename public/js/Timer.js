@@ -1,8 +1,9 @@
 export default class Timer {
     
-    constructor(callbacks, rate = 1 / 60) {
+    constructor(callbacks, rate = 1 / 60, renderOnUpdateOnly = true) {
         this._callbacks = callbacks;
         this._rate = rate;
+        this._renderOnUpdateOnly = renderOnUpdateOnly;
 
         this._lastTime = 0;
         this._accumulator = 0;
@@ -21,7 +22,8 @@ export default class Timer {
         }
         this._lastTime = time;
         // render only if at least once 'update' is called
-        if (this._lastTick !== this._tick) {
+        // or if render is desired to be called always (this._renderOnUpdateOnly is false)
+        if (!this._renderOnUpdateOnly || this._lastTick !== this._tick) {
             this._callbacks.render();
         }
         this._lastTick = this._tick;

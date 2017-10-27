@@ -1,38 +1,7 @@
+import * as matrix from './matrix.js';
 import Timer from './Timer.js';
 import Player from './Player.js';
-import { PieceT, PieceL } from './Piece.js';
-
-/**
- * Create a "blank" (full with zeros) matrix
- * @param {number} w 
- * @param {number} h 
- */
-function createMatrix(w, h) {
-    const matrix = [];
-    while (h--) {
-        matrix.push(new Array(h).fill(0));
-    }
-    return matrix;
-}
-
-/**
- * Merge the "ones" from the Player's piece's matrix into the specified matrix
- * @param {[[]]} matrix 
- * @param {Player} Player
- */
-function mergeMatrix(matrix, player) {
-    const offsetX = player.pos.x;
-    const offsetY = player.pos.y;
-    player.piece.forEach((row, y) => {
-        row.forEach((value, x) => {
-            // if a "one" - put in the arena
-            if (value) {
-                matrix[y + offsetY][x + offsetX] = value;
-            }
-        });
-    });
-}
-
+import { PIECES } from './pieces.js';
 
 export default class Tetris {
     constructor(canvas, arenaW, arenaH, scale = 1) {
@@ -43,15 +12,14 @@ export default class Tetris {
         this._canvas.height = arenaH * scale;
         this._context.scale(scale, scale);
 
-        this._arena = createMatrix(arenaW, arenaH);
+        this._arena = matrix.create(arenaW, arenaH);
 
         this._player = new Player(arenaW / 2);
 
         // start with droping the piece on every 1 sec
         this._timer = new Timer({
-            update: this._update.bind(this), render: this._render.bind(this)
-        }, 1);
-
+            update: this._drop.bind(this), render: this._render.bind(this)
+        }, 1, false);
 
         document.addEventListener('keydown', event => this._handleKeydown(event));
     }
@@ -59,36 +27,73 @@ export default class Tetris {
     start() {
         this._generatePiece();
 
+        this._render();
+
         this._timer.start();
     }
 
     _generatePiece() {
-        const piece = new PieceT();
-        this._player.resetWith(piece);
+        // generate a new random piece
+        const rand = Math.floor(Math.random() * PIECES.length);
+        this._player.resetWith(PIECES[rand], 'red');
     }
 
-    _update() {
-        this._player.drop();
+    _drop() {
+        // mkake drop
+        this._player.drop(1);
+
+        // check for bottom reached or collision
+        if (matrix.isCollide(this._arena, this._player)) {
+            // if yes - then revert the last "collision drop"
+            this._player.drop(-1);
+
+            // merge the piece with the arena
+            matrix.merge(this._arena, this._player);
+
+            // TODO: check for Tetris, e.g. clear full lines and increase points
+
+            // TODO: check for Game Over
+
+            // generate a new piece for the player - it will be also started form the top
+            this._generatePiece();
+        }
+    }
+
+    _move(isLeft) {
+        this._player.move(isLeft ? -1 : 1);
+        if (matrix.isCollide(this._arena, this._player)) {
+            // reached the left/right borders
+            this._player.move(isLeft ? 1 : -1);
+        }
+
+
     }
 
     _render() {
         this._context.fillStyle = 'black';
         this._context.fillRect(0, 0, this._canvas.width, this._canvas.height);
 
-        this._player.render(this._context);
+        // render the arena (current fallen pieces)
+        matrix.render(this._arena, this._context);
+
+        // render the player (current falling piece)
+        matrix.render(this._player.piece, this._context, this._player.color, this._player.pos);
     }
 
     _handleKeydown(event) {
-        if (event.keyCode === 37) {
-            this._player.move(true);
-        } else if (event.keyCode === 39) {
-            this._player.move(false);
-        } else if (event.keyCode === 40) {
-            // TODO: cancel next "update-drop" while using the keys
-            // in order not to get an additional drop right after the keydown event
-            this._player.drop();
+        switch (event.keyCode) {
+            case 37:   // left
+            case 39:   // right
+                this._move(event.keyCode === 37);
+                break;
+            case 40:  // down
+                // cancel next "update-drop" while using the keys
+                // in order not to get an additional drop right after the keydown event
+                
+                // TODO: allow resetting the accumulated time
+                this._drop();
+                break;
 
-            this._render();
         }
     }
 
