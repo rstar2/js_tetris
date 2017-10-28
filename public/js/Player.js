@@ -6,6 +6,7 @@ export default class Player {
         this._pos = new Vector(arenaCenter, 0);
         this._piece = undefined;
         this._color = undefined;
+        this._scrore = 0;
     }
 
     get pos() {
@@ -18,6 +19,18 @@ export default class Player {
 
     get color() {
         return this._color;
+    }
+
+    get score() {
+        return this._score;
+    }
+
+    addScore(score) {
+        this._score += score;
+    }
+
+    resetScore() {
+        this._score = 0;
     }
 
     /**
