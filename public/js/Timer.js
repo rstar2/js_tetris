@@ -1,4 +1,69 @@
 
+
+function createWorker(callbacks, rate, renderOnUpdateOnly, name) {
+    let lastTime = 0;
+    let accumulator = 0;
+    let tick = 0;
+    let lastTick = 0;
+    let frameId = null;
+    let isStopped = true;
+
+    const loop = function (time) {
+        if (name >= 2) 
+            console.log("next", name, lastTime, accumulator, time, (time - lastTime));
+        if (lastTime) {
+            accumulator += (time - lastTime) / 1000;
+            while (accumulator > rate) {
+                if (isStopped) {
+                    console.log("stopped", name)
+                    // this means this worker is meanwhile stopped, so just return 
+                    return;
+                }
+
+                console.log("update", name)
+                callbacks.update(rate, tick++);
+                accumulator -= rate;
+            }
+        } else {
+            console.log("first", name)
+        }
+        if (isStopped) {
+            console.log("stopped", name)
+            // this means this worker is meanwhile stopped, so just return 
+            return;
+        }
+        lastTime = time;
+        // render only if at least once 'update' is called
+        // or if render is desired to be called always (this._renderOnUpdateOnly is false)
+        if (!renderOnUpdateOnly || lastTick !== tick) {
+            callbacks.render();
+        }
+        lastTick = tick;
+        frameId = requestAnimationFrame(loop);
+    };
+
+    return {
+        start: function () {
+            isStopped = false;
+            if (!frameId) {
+                console.log("start", name)
+                frameId = requestAnimationFrame(loop);
+            }
+            
+        },
+
+        stop: function () {
+            isStopped = true;
+            
+            if (frameId) {
+                console.log("stop", name)
+                cancelAnimationFrame(frameId);
+                frameId = null;
+            }
+        }
+    };
+}
+
 export default class Timer {
 
     constructor(callbacks, rate = 1 / 60, renderOnUpdateOnly = true) {
@@ -6,53 +71,33 @@ export default class Timer {
         this._rate = rate;
         this._renderOnUpdateOnly = renderOnUpdateOnly;
 
-        this._lastTime = 0;
-        this._accumulator = 0;
-        this._tick = 0;
-        this._lastTick = 0;
-        this._frameId = null;
-    }
-    _loop(time) {
-        if (this._lastTime) {
-            this._accumulator += (time - this._lastTime) / 1000;
-            while (this._accumulator > this._rate) {
-                this._callbacks.update(this._rate, this._tick++);
-
-                if (!this._frameId) {
-                    // this means the timer is meanwhile stopped
-                    // so just return
-                    return;
-                }
-                this._accumulator -= this._rate;
-            }
+        // if not supplied proper callback methods (update and render) then create noop/dummy ones
+        if (!callbacks.update) {
+            callbacks.update = () => { };
         }
-        this._lastTime = time;
-        // render only if at least once 'update' is called
-        // or if render is desired to be called always (this._renderOnUpdateOnly is false)
-        if (!this._renderOnUpdateOnly || this._lastTick !== this._tick) {
-            this._callbacks.render();
+        if (!callbacks.render) {
+            callbacks.render = () => { };
         }
-        this._lastTick = this._tick;
-        this._frameId = requestAnimationFrame(this._loop.bind(this));
+        this.NAME = 0;
     }
 
     start() {
-        // Note if calling again start() after stop()
-        // then it MUST BE done in a new event-loop cycle in order to really stop current 'while loop'
-        // TODO: implement this by a new inner class/object that is created on each new start 
-        this._frameId = requestAnimationFrame(this._loop.bind(this));
+        this.NAME++;
+        this.stop();
+
+        this._worker = createWorker(this._callbacks, this._rate, this._renderOnUpdateOnly, this.NAME);
+        this._worker.start();
     }
 
     stop() {
-        if (this._frameId) {
-            cancelAnimationFrame(this._frameId);
-            this._frameId = null;
-            this._lastTime = 0;
-            this._accumulator = 0;
+        if (this._worker) {
+            this._worker.stop();
+            this._worker = null;
         }
     }
 
     setRate(rate) {
+        // TODO:
         if (this._rate === rate) {
             return;
         }

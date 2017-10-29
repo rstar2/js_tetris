@@ -45,11 +45,9 @@ export default class Tetris {
     _stop() {
         this._timer.stop();
 
-        setTimeout(() => {
-            if (window.confirm('Game Over - Start again')) {
-                this.start();
-            }
-        },0);
+        if (window.confirm('Game Over - Start again')) {
+            this.start();
+        }
     }
 
     _generatePiece() {
