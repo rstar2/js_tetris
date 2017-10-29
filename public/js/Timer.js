@@ -1,3 +1,4 @@
+
 export default class Timer {
 
     constructor(callbacks, rate = 1 / 60, renderOnUpdateOnly = true) {
@@ -24,8 +25,6 @@ export default class Timer {
                 }
                 this._accumulator -= this._rate;
             }
-        } else {
-            console.log("First", this._lastTime);
         }
         this._lastTime = time;
         // render only if at least once 'update' is called
@@ -38,6 +37,9 @@ export default class Timer {
     }
 
     start() {
+        // Note if calling again start() after stop()
+        // then it MUST BE done in a new event-loop cycle in order to really stop current 'while loop'
+        // TODO: implement this by a new inner class/object that is created on each new start 
         this._frameId = requestAnimationFrame(this._loop.bind(this));
     }
 
@@ -47,9 +49,7 @@ export default class Timer {
             this._frameId = null;
             this._lastTime = 0;
             this._accumulator = 0;
-            console.log("Stop");
         }
-
     }
 
     setRate(rate) {
