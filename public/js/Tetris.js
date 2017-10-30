@@ -3,8 +3,15 @@ import Timer from './Timer.js';
 import Player from './Player.js';
 import { PIECES } from './pieces.js';
 
+const STATE = {
+    INIT: 0,
+    STOPPED: 1,
+    STARTED: 2,
+    PAUSED: 3
+}
+
 export default class Tetris {
-    constructor(canvas, arenaW, arenaH, scale = 1, score) {
+    constructor(canvas, arenaW, arenaH, scale = 1, score, startButton) {
         this._canvas = canvas;
         this._context = canvas.getContext('2d');
 
@@ -22,11 +29,28 @@ export default class Tetris {
         }, 1, false);
 
         this._score = score;
+        this._startButton = startButton;
+
+        this._reset(STATE.INIT);
 
         document.addEventListener('keydown', event => this._handleKeydown(event));
+
+        this._startButton.addEventListener('click', event => this._handleStartPause(event));
     }
 
-    start() {
+    start(toReset) {
+        // if this is "next" game the reset before startin the new
+        // else if it is normal first game then the reset has already been done
+        if (toReset) {
+            this._reset();
+        }
+
+        this._setState(STATE.STARTED);
+
+        this._timer.start();
+    }
+
+    _reset(state) {
         // reset the arena
         matrix.reset(this._arena);
 
@@ -39,15 +63,23 @@ export default class Tetris {
         // render all till now 
         this._render();
 
-        this._timer.start();
+        this._setState(state !== undefined ? state : STATE.STOPPED);
     }
 
     _stop() {
+        this._setState(STATE.STOPPED);
+        this._render();
         this._timer.stop();
+    }
 
-        if (window.confirm('Game Over - Start again')) {
-            this.start();
-        }
+    _pause() {
+        this._setState(STATE.PAUSED);
+        this._timer.pause();
+    }
+
+    _unpause() {
+        this._setState(STATE.STARTED);
+        this._timer.unpause();
     }
 
     _generatePiece() {
@@ -80,7 +112,6 @@ export default class Tetris {
 
             // check for Game Over - just check if right after a new piece there's a collision
             if (matrix.isCollide(this._arena, this._player)) {
-                this._render();
                 this._stop();
             }
         }
@@ -122,6 +153,28 @@ export default class Tetris {
         }
     }
 
+    _setState(state) {
+        if (this._state === state)
+            return;
+
+        this._state = state;
+
+        let text;
+        switch (this._state) {
+            case STATE.INIT:
+            case STATE.STOPPED:
+                text = 'Start';
+                break;
+            case STATE.STARTED:
+                text = 'Pause';
+                break;
+            case STATE.PAUSED:
+                text = 'Start';
+                break;
+        }
+        this._startButton.innerText = text;
+    }
+
     _renderScore() {
         if (this._score) {
             this._score.innerText = this._player.score;
@@ -140,6 +193,10 @@ export default class Tetris {
     }
 
     _handleKeydown(event) {
+        if (this._state !== STATE.STARTED) {
+            return;
+        }
+
         switch (event.keyCode) {
             case 37:   // left
                 this._move(true);
@@ -156,15 +213,28 @@ export default class Tetris {
             case 40:  // down
                 // cancel next "update-drop" while using the keys
                 // in order not to get an additional drop right after the keydown event
-
-                // TODO: allow resetting the accumulated time
+                this._timer.reset();
                 this._drop();
                 break;
 
         }
     }
 
+    _handleStartPause() {
+        switch (this._state) {
+            case STATE.INIT:
+            case STATE.STOPPED:
+                this.start(this._state === STATE.STOPPED);
+                break;
+            case STATE.STARTED:
+                this._pause();
+                break;
+            case STATE.PAUSED:
+                this._unpause();
+                break;
+        }
+    }
+
 }
 
 // TODO:  increase drop rate as the time goes - more difficult
-// TODO:  fix reset but with the Timer

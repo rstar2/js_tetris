@@ -1,65 +1,68 @@
 
 
-function createWorker(callbacks, rate, renderOnUpdateOnly, name) {
+function createWorker(callbacks, rate, renderOnUpdateOnly) {
     let lastTime = 0;
     let accumulator = 0;
     let tick = 0;
     let lastTick = 0;
     let frameId = null;
-    let isStopped = true;
 
     const loop = function (time) {
-        if (name >= 2) 
-            console.log("next", name, lastTime, accumulator, time, (time - lastTime));
-        if (lastTime) {
-            accumulator += (time - lastTime) / 1000;
-            while (accumulator > rate) {
-                if (isStopped) {
-                    console.log("stopped", name)
-                    // this means this worker is meanwhile stopped, so just return 
-                    return;
-                }
-
-                console.log("update", name)
-                callbacks.update(rate, tick++);
-                accumulator -= rate;
-            }
-        } else {
-            console.log("first", name)
-        }
-        if (isStopped) {
-            console.log("stopped", name)
+        if (!frameId) {
             // this means this worker is meanwhile stopped, so just return 
             return;
         }
+
+        if (lastTime) {
+            accumulator += (time - lastTime) / 1000;
+            while (accumulator > rate) {
+                callbacks.update(rate, tick++);
+                accumulator -= rate;
+
+                if (!frameId) {
+                    // this means this worker is meanwhile stopped, so just return 
+                    return;
+                }
+            }
+        }
+
         lastTime = time;
+        
         // render only if at least once 'update' is called
         // or if render is desired to be called always (this._renderOnUpdateOnly is false)
         if (!renderOnUpdateOnly || lastTick !== tick) {
             callbacks.render();
         }
         lastTick = tick;
+
         frameId = requestAnimationFrame(loop);
     };
 
     return {
         start: function () {
-            isStopped = false;
             if (!frameId) {
-                console.log("start", name)
                 frameId = requestAnimationFrame(loop);
             }
-            
         },
 
         stop: function () {
-            isStopped = true;
-            
             if (frameId) {
-                console.log("stop", name)
                 cancelAnimationFrame(frameId);
                 frameId = null;
             }
+        },
+
+        reset: function () {
+            accumulator = 0;
+        },
+
+        pause: function () {
+            lastTime = 0;
+            this.stop();
+        },
+
+        unpause: function () {
+            this.start();
         }
     };
 }
@@ -78,14 +81,12 @@ export default class Timer {
         if (!callbacks.render) {
             callbacks.render = () => { };
         }
-        this.NAME = 0;
     }
 
     start() {
-        this.NAME++;
         this.stop();
 
-        this._worker = createWorker(this._callbacks, this._rate, this._renderOnUpdateOnly, this.NAME);
+        this._worker = createWorker(this._callbacks, this._rate, this._renderOnUpdateOnly);
         this._worker.start();
     }
 
@@ -96,14 +97,22 @@ export default class Timer {
         }
     }
 
-    setRate(rate) {
-        // TODO:
-        if (this._rate === rate) {
-            return;
+    reset() {
+        if (this._worker) {
+            this._worker.reset();
         }
+    }
 
-        this._accumulator = 0;
-        this._rate = rate;
+    pause() {
+        if (this._worker) {
+            this._worker.pause();
+        }
+    }
+
+    unpause() {
+        if (this._worker) {
+            this._worker.unpause();
+        }
     }
 
 }

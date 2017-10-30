@@ -7,6 +7,7 @@ const ARENA_HEIGHT = 20;
 const SCALE = 20;
 
 const tetris = new Tetris(document.getElementById('screen'),
-    ARENA_WIDTH, ARENA_HEIGHT, SCALE, document.getElementById('score'));
-tetris.start();
+    ARENA_WIDTH, ARENA_HEIGHT, SCALE, document.getElementById('score'),
+    document.getElementById('start'));
+//tetris.start();
 
