@@ -39,7 +39,7 @@ export default class Tetris {
     }
 
     start(toReset) {
-        // if this is "next" game the reset before startin the new
+        // if this is "next" game the reset before starting the new
         // else if it is normal first game then the reset has already been done
         if (toReset) {
             this._reset();
