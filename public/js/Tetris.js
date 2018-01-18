@@ -74,12 +74,12 @@ export default class Tetris {
 
     _pause() {
         this._setState(STATE.PAUSED);
-        this._timer.pause();
+        this._timer.stop();
     }
 
     _unpause() {
         this._setState(STATE.STARTED);
-        this._timer.unpause();
+        this._timer.start();
     }
 
     _generatePiece() {
@@ -213,7 +213,7 @@ export default class Tetris {
             case 40:  // down
                 // cancel next "update-drop" while using the keys
                 // in order not to get an additional drop right after the keydown event
-                this._timer.reset();
+                this._timer.suspend();
                 this._drop();
                 break;
 
